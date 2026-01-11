@@ -1,0 +1,13 @@
+# Node
+node_modules/
+
+# React
+build/
+dist/
+
+# Environment files
+.env
+
+# OS
+.DS_Store
+git init
