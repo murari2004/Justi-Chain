@@ -17,6 +17,9 @@ app.use(cookieParser());
 // Routes
 app.use("/api/auth", require("./routes/auth.routes"));
 app.use("/api/protected", require("./routes/protected.routes"));
+app.use("/api/citizen", require("./routes/citizen.routes"));
+app.use("/api/police", require("./routes/police.routes"));
+
 
 // MongoDB
 mongoose.connect("mongodb://127.0.0.1:27017/justichain")

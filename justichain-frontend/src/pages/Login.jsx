@@ -7,6 +7,7 @@ function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
+  // 🔍 Basic client-side validation
   const validate = () => {
     if (!email || !password) {
       setError("⚠️ Please fill in all fields");
@@ -22,18 +23,39 @@ function Login() {
     return true;
   };
 
+  // 🔐 Login + Role-based redirect
   const login = async () => {
     if (!validate()) return;
 
     try {
+      // 1️⃣ Login (JWT cookie set here)
       await axios.post(
         "http://localhost:5000/api/auth/login",
         { email, password },
         { withCredentials: true }
       );
 
-      window.location.href = "/dashboard";
-    } catch {
+      // 2️⃣ Ask backend who logged in
+      const res = await axios.get(
+        "http://localhost:5000/api/auth/me",
+        { withCredentials: true }
+      );
+
+      const role = res.data.role;
+
+      // 3️⃣ Redirect based on role
+      if (role === "citizen") {
+        window.location.href = "/citizen";
+      } else if (role === "lawyer") {
+        window.location.href = "/lawyer";
+      } else if (role === "police") {
+        window.location.href = "/police";
+      } else {
+        // court / admin
+        window.location.href = "/court";
+      }
+
+    } catch (err) {
       setError("⚠️ Invalid email or password");
     }
   };
@@ -57,6 +79,7 @@ function Login() {
         <input
           placeholder="Email Address"
           className={error && !email ? "error-input" : ""}
+          value={email}
           onChange={e => setEmail(e.target.value)}
         />
 
@@ -64,6 +87,7 @@ function Login() {
           type="password"
           placeholder="Password"
           className={error && !password ? "error-input" : ""}
+          value={password}
           onChange={e => setPassword(e.target.value)}
         />
 

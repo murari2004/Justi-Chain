@@ -8,8 +8,17 @@ const SECRET = "JUSTICHAIN_SECRET";
 
 
 // 🔹 REGISTER
+// 🔹 REGISTER (FIXED)
 router.post("/register", async (req, res) => {
-  const { name, email, password, role } = req.body;
+  let { name, email, password, role } = req.body;
+
+  // ✅ Normalize role
+  role = role?.toLowerCase();
+
+  // ✅ Validate role
+  if (!["citizen", "lawyer", "police"].includes(role)) {
+    return res.status(400).json({ msg: "Invalid role" });
+  }
 
   const exists = await User.findOne({ email });
   if (exists) return res.status(400).json({ msg: "User already exists" });
@@ -50,9 +59,29 @@ router.post("/login", async (req, res) => {
   });
 
   res.json({
-    name: user.name,
-    role: user.role
+    msg: "Login successful"
   });
+});
+
+
+// 🔹 WHO AM I (ROLE CHECK)  ✅ REQUIRED
+router.get("/me", async (req, res) => {
+  const token = req.cookies.token;
+  if (!token) return res.status(401).json({ msg: "Unauthorized" });
+
+  try {
+    const decoded = jwt.verify(token, SECRET);
+
+    const user = await User.findById(decoded.id).select("name role");
+
+    res.json({
+      userId: user._id,
+      name: user.name,
+      role: user.role
+    });
+  } catch {
+    res.status(401).json({ msg: "Invalid token" });
+  }
 });
 
 
