@@ -35,6 +35,25 @@ router.post("/register", async (req, res) => {
   res.json({ msg: "User registered successfully" });
 });
 
+router.post("/admin-access", async (req, res) => {
+  const { code } = req.body;
+
+  // 🔐 SECRET JUDGE CODE
+  const JUDGE_CODE = "1234";
+
+  // Validate code
+  if (!code || code !== JUDGE_CODE) {
+    return res.status(401).json({ msg: "Invalid judge code" });
+  }
+
+  // ✅ No token, no cookie, no session
+  // Just confirm the code is valid
+  res.json({
+    success: true,
+    msg: "Judge code verified"
+  });
+});
+
 
 // 🔹 LOGIN
 router.post("/login", async (req, res) => {

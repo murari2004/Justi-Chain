@@ -1,63 +1,75 @@
 const mongoose = require("mongoose");
 
+const hearingSchema = new mongoose.Schema({
+  hearingId: String,
+  hearingDate: Date,
+  isOpen: {
+    type: Boolean,
+    default: false
+  },
+  courtRoomId: String,
+  password: String
+});
+
 const caseSchema = new mongoose.Schema({
-  caseId: { type: String, unique: true, index: true },
+  caseId: { type: String, unique: true },
 
   title: String,
   description: String,
   caseType: String,
 
+  opponent: {
+    name: String,
+    email: String
+  },
+
   citizenId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
-    index: true
+    required: true
   },
 
-  opponent: {
-    name: String,
-    email: String,
-    phone: String
+  lawyerId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    default: null
+  },
+
+  policeId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    default: null
   },
 
   status: {
     type: String,
-    enum: ["registered", "investigation", "hearing", "closed"],
-    default: "registered"
-  },
-
-  // 👮 Police (one)
-  assignedPoliceId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    default: null,
-    index: true
-  },
-
-  policeAssignedAt: Date,
-  policeAssignmentMode: {
-    type: String,
-    enum: ["self-assigned", "court-assigned"]
-  },
-
-  // ⚖️ Lawyers (many)
-  assignedLawyers: {
-    type: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User"
-      }
+    enum: [
+      "CREATED",
+      "LAWYER_REQUESTED",
+      "LAWYER_ASSIGNED",
+      "HEARING_SCHEDULED",
+      "CLOSED"
     ],
-    default: [],
-    index: true
+    default: "CREATED"
   },
 
-  // 📝 Police investigation notes
-  investigationNotes: [
-    {
-      note: String,
-      createdAt: { type: Date, default: Date.now }
-    }
-  ],
+  // 🔑 COURTROOM STATE
+  courtroomOpen: {
+    type: Boolean,
+    default: false
+  },
+
+  courtRoomId: String,
+  courtAccessPassword: String,
+
+  // 📅 CURRENT HEARING (for dashboard)
+  hearingDate: Date,
+
+  // 🧾 ALL HEARINGS
+  hearings: {
+    type: [hearingSchema],
+    default: []
+  },
 
   createdAt: {
     type: Date,

@@ -52,7 +52,7 @@ function Register() {
   return (
     <div className="register-page">
 
-      {/* HERO / MESSAGE SECTION */}
+      {/* HERO SECTION */}
       <section className="hero-section">
         <div className="hero-overlay">
           <h1>Justice Should Be Accessible</h1>
@@ -71,6 +71,15 @@ function Register() {
           </div>
 
           <p className="scroll-text">⬇ Scroll to create your account</p>
+
+          {/* 👨‍⚖️ JUDGE / ADMIN ACCESS BUTTON */}
+          <button
+            className="judge-access-btn"
+            onClick={() => window.location.href = "/judge-access"}
+          >
+            👨‍⚖️ Judge / Admin Access
+          </button>
+
         </div>
       </section>
 
@@ -86,7 +95,6 @@ function Register() {
             more transparent justice system.
           </p>
 
-          {/* ERROR MESSAGE */}
           {error && <p className="error-text">{error}</p>}
 
           <input

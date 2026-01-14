@@ -3,14 +3,13 @@ import { useEffect, useState } from "react";
 
 function LawyerDashboard() {
   const [user, setUser] = useState({ name: "" });
+  const [requests, setRequests] = useState([]);
   const [cases, setCases] = useState([]);
-  const [caseId, setCaseId] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
     const init = async () => {
-      // 🔐 AUTH + ROLE CHECK (ONLY THIS CAN REDIRECT)
       try {
         const me = await axios.get(
           "http://localhost:5000/api/auth/me",
@@ -23,70 +22,83 @@ function LawyerDashboard() {
         }
 
         setUser({ name: me.data.name });
+
+        await loadRequests();
+        await loadCases();
       } catch {
         window.location.href = "/";
-        return;
-      }
-
-      // 📦 LOAD LAWYER CASES (NO REDIRECT ON FAILURE)
-      try {
-        const res = await axios.get(
-          "http://localhost:5000/api/lawyer/my-cases",
-          { withCredentials: true }
-        );
-        setCases(res.data);
-      } catch (err) {
-        console.error("Failed to load lawyer cases:", err.response?.data || err);
-        setCases([]); // safe fallback
       }
     };
 
     init();
   }, []);
 
-  // 🟢 TAKE CASE
-  const takeCase = async () => {
-    setMessage("");
-    setError("");
-
-    if (!caseId) {
-      setError("Please enter Case ID");
-      return;
-    }
-
+  const loadRequests = async () => {
     try {
-      const res = await axios.post(
-        "http://localhost:5000/api/lawyer/take-case",
-        { caseId },
+      const res = await axios.get(
+        "http://localhost:5000/api/lawyer/requests",
         { withCredentials: true }
       );
-
-      setMessage(res.data.msg);
-      setCaseId("");
-
-      // reload cases safely
-      const updated = await axios.get(
-        "http://localhost:5000/api/lawyer/my-cases",
-        { withCredentials: true }
-      );
-      setCases(updated.data);
-    } catch (err) {
-      setError(err.response?.data?.msg || "Failed to take case");
+      setRequests(Array.isArray(res.data) ? res.data : []);
+    } catch {
+      setRequests([]);
     }
   };
 
-  // 🏛️ ENTER COURTROOM
-  const enterCourt = async (id) => {
+  const loadCases = async () => {
+    try {
+      const res = await axios.get(
+        "http://localhost:5000/api/lawyer/my-cases",
+        { withCredentials: true }
+      );
+      setCases(Array.isArray(res.data) ? res.data : []);
+    } catch {
+      setCases([]);
+    }
+  };
+
+  const acceptRequest = async (requestId) => {
+    setMessage("");
+    setError("");
+
     try {
       await axios.post(
-        "http://localhost:5000/api/lawyer/enter-case",
-        { caseId: id },
+        "http://localhost:5000/api/lawyer/accept-request",
+        { requestId },
         { withCredentials: true }
       );
 
-      window.location.href = `/courtroom/${id}`;
+      setMessage("Case accepted successfully");
+      await loadRequests();
+      await loadCases();
     } catch {
-      alert("Not authorized to enter this case");
+      setError("Failed to accept request");
+    }
+  };
+
+  const rejectRequest = async (requestId) => {
+    try {
+      await axios.post(
+        "http://localhost:5000/api/lawyer/reject-request",
+        { requestId },
+        { withCredentials: true }
+      );
+      await loadRequests();
+    } catch {
+      alert("Failed to reject request");
+    }
+  };
+
+  const enterCourt = async (caseId) => {
+    try {
+      await axios.post(
+        "http://localhost:5000/api/lawyer/enter-case",
+        { caseId },
+        { withCredentials: true }
+      );
+      window.location.href = `/courtroom/${caseId}`;
+    } catch {
+      alert("Not authorized");
     }
   };
 
@@ -100,20 +112,34 @@ function LawyerDashboard() {
 
       <hr />
 
-      {/* TAKE CASE */}
-      <h3>Take Case</h3>
-      <input
-        placeholder="JC-xxxx"
-        value={caseId}
-        onChange={e => setCaseId(e.target.value)}
-      />
-      <button onClick={takeCase}>Take Case</button>
+      <h3>📩 Pending Requests</h3>
+      {requests.length === 0 && <p>No pending requests</p>}
+
+      {requests.map(r => (
+        <div
+          key={r._id}
+          style={{ border: "1px solid #ccc", padding: "10px", marginBottom: "10px" }}
+        >
+          <b>Case ID:</b> {r.caseId}<br />
+          <b>Citizen:</b> {r.citizenId?.name}<br />
+
+          <button onClick={() => acceptRequest(r._id)}>
+            Accept
+          </button>
+
+          <button
+            onClick={() => rejectRequest(r._id)}
+            style={{ marginLeft: "10px" }}
+          >
+            Reject
+          </button>
+        </div>
+      ))}
 
       <hr />
 
-      {/* MY CASES */}
-      <h3>My Cases</h3>
-      {cases.length === 0 && <p>No cases taken yet</p>}
+      <h3>📂 My Cases</h3>
+      {cases.length === 0 && <p>No cases assigned yet</p>}
 
       {cases.map(c => (
         <div key={c.caseId} style={{ marginBottom: "10px" }}>
@@ -127,7 +153,6 @@ function LawyerDashboard() {
 
       <hr />
 
-      {/* LOGOUT */}
       <button
         onClick={async () => {
           await axios.post(
