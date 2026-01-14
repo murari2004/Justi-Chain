@@ -90,17 +90,22 @@ function LawyerDashboard() {
   };
 
   const enterCourt = async (caseId) => {
-    try {
-      await axios.post(
-        "http://localhost:5000/api/lawyer/enter-case",
-        { caseId },
-        { withCredentials: true }
-      );
-      window.location.href = `/courtroom/${caseId}`;
-    } catch {
-      alert("Not authorized");
-    }
-  };
+  try {
+    await axios.post(
+      "http://localhost:5000/api/lawyer/enter-case",
+      { caseId },
+      { withCredentials: true }
+    );
+
+    // ✅ ADD THIS
+    sessionStorage.setItem("role", "lawyer");
+
+    window.location.href = `/courtroom/${caseId}`;
+  } catch {
+    alert("Not authorized");
+  }
+};
+
 
   return (
     <div style={{ padding: "30px" }}>

@@ -13,8 +13,8 @@ router.get("/my-cases", auth, async (req, res) => {
   }
 
   const cases = await Case.find({
-    assignedPoliceId: req.user.id
-  }).populate("assignedPoliceId", "name");
+    policeId: req.user.id   // ✅ FIXED
+  }).sort({ createdAt: -1 });
 
   res.json(cases);
 });
@@ -32,18 +32,12 @@ router.post("/assign", auth, async (req, res) => {
   const c = await Case.findOne({ caseId });
   if (!c) return res.status(404).json({ msg: "Case not found" });
 
-  if (c.assignedPoliceId) {
-    return res.status(400).json({ msg: "Case already assigned" });
+  if (c.policeId) {
+    return res.status(400).json({ msg: "Case already assigned to police" });
   }
 
-  if (c.status !== "registered") {
-    return res.status(400).json({ msg: "Case not available for assignment" });
-  }
-
-  c.assignedPoliceId = req.user.id;
-  c.policeAssignedAt = new Date();
-  c.policeAssignmentMode = "self-assigned";
-  c.status = "investigation";
+  c.policeId = req.user.id;          // ✅ FIXED
+  c.status = "INVESTIGATION";
 
   await c.save();
 
@@ -54,7 +48,7 @@ router.post("/assign", auth, async (req, res) => {
 });
 
 /**
- * 🔹 POST: Enter Case (Courtroom Access Check)
+ * 🏛️ ENTER COURTROOM (POLICE)
  */
 router.post("/enter-case", auth, async (req, res) => {
   if (req.user.role !== "police") {
@@ -66,20 +60,19 @@ router.post("/enter-case", auth, async (req, res) => {
   const c = await Case.findOne({ caseId });
   if (!c) return res.status(404).json({ msg: "Case not found" });
 
-  if (c.assignedPoliceId.toString() !== req.user.id) {
-    return res.status(403).json({ msg: "You are not assigned to this case" });
+  if (String(c.policeId) !== String(req.user.id)) {
+    return res.status(403).json({ msg: "Not assigned to this case" });
   }
 
-  res.json({
-    ok: true,
-    caseId: c.caseId,
-    policeName: req.user.name,
-    status: c.status
-  });
+  if (!c.courtroomOpen || !c.courtRoomId) {
+    return res.status(403).json({ msg: "Courtroom not open" });
+  }
+
+  res.json({ success: true });
 });
 
 /**
- * 🔹 POST: Add Investigation Note / Evidence Description
+ * 📝 ADD INVESTIGATION NOTE
  */
 router.post("/add-note", auth, async (req, res) => {
   if (req.user.role !== "police") {
@@ -91,7 +84,7 @@ router.post("/add-note", auth, async (req, res) => {
   const c = await Case.findOne({ caseId });
   if (!c) return res.status(404).json({ msg: "Case not found" });
 
-  if (c.assignedPoliceId.toString() !== req.user.id) {
+  if (String(c.policeId) !== String(req.user.id)) {
     return res.status(403).json({ msg: "Not authorized" });
   }
 

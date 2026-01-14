@@ -8,11 +8,9 @@ function PoliceDashboard() {
   const [note, setNote] = useState("");
   const [message, setMessage] = useState("");
 
-  // 🔐 PROTECT DASHBOARD + FETCH POLICE NAME
   useEffect(() => {
     const init = async () => {
       try {
-        // 1️⃣ Check auth + role
         const me = await axios.get(
           "http://localhost:5000/api/auth/me",
           { withCredentials: true }
@@ -23,10 +21,8 @@ function PoliceDashboard() {
           return;
         }
 
-        // 2️⃣ Save police name
         setUser({ name: me.data.name });
 
-        // 3️⃣ Load assigned cases
         const res = await axios.get(
           "http://localhost:5000/api/police/my-cases",
           { withCredentials: true }
@@ -41,7 +37,7 @@ function PoliceDashboard() {
     init();
   }, []);
 
-  // 🟢 Self-assign case
+  // 🟢 Assign Case
   const assignCase = async () => {
     try {
       const res = await axios.post(
@@ -52,13 +48,18 @@ function PoliceDashboard() {
 
       setMessage(res.data.msg);
       setCaseId("");
-      window.location.reload();
+
+      const updated = await axios.get(
+        "http://localhost:5000/api/police/my-cases",
+        { withCredentials: true }
+      );
+      setCases(updated.data);
     } catch (err) {
       setMessage(err.response?.data?.msg || "Assignment failed");
     }
   };
 
-  // 🏛️ Enter courtroom
+  // 🏛️ Enter Courtroom
   const enterCourtroom = async (id) => {
     try {
       await axios.post(
@@ -67,13 +68,16 @@ function PoliceDashboard() {
         { withCredentials: true }
       );
 
+      // ✅ CRITICAL FIX
+      sessionStorage.setItem("role", "police");
+
       window.location.href = `/courtroom/${id}`;
     } catch {
-      alert("Not authorized to enter this case");
+      alert("Not authorized or courtroom closed");
     }
   };
 
-  // 📝 Add investigation note
+  // 📝 Add Note
   const addNote = async () => {
     try {
       await axios.post(
@@ -98,8 +102,7 @@ function PoliceDashboard() {
 
       <hr />
 
-      {/* ASSIGN CASE */}
-      <h3>Assign Case (Self-Assign)</h3>
+      <h3>Assign Case</h3>
       <input
         placeholder="Enter Case ID"
         value={caseId}
@@ -109,10 +112,8 @@ function PoliceDashboard() {
 
       <hr />
 
-      {/* ADD NOTE */}
       <h3>Add Investigation Note</h3>
       <textarea
-        placeholder="Write investigation update"
         value={note}
         onChange={e => setNote(e.target.value)}
       />
@@ -121,7 +122,6 @@ function PoliceDashboard() {
 
       <hr />
 
-      {/* MY CASES */}
       <h3>My Assigned Cases</h3>
       {cases.length === 0 && <p>No assigned cases yet</p>}
 
@@ -137,7 +137,6 @@ function PoliceDashboard() {
 
       <hr />
 
-      {/* LOGOUT */}
       <button
         onClick={async () => {
           await axios.post(

@@ -127,7 +127,7 @@ function CitizenDashboard() {
       { caseId },
       { withCredentials: true }
     );
-
+    sessionStorage.setItem("role", "citizen");
     window.location.href = `/courtroom/${caseId}`;
   } catch (err) {
     setError(err.response?.data?.msg || "Unauthorized or courtroom closed");
