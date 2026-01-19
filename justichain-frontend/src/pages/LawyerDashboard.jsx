@@ -1,5 +1,6 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
+import "../styles/lawyer.css";
 
 function LawyerDashboard() {
   const [user, setUser] = useState({ name: "" });
@@ -90,86 +91,96 @@ function LawyerDashboard() {
   };
 
   const enterCourt = async (caseId) => {
-  try {
-    await axios.post(
-      "http://localhost:5000/api/lawyer/enter-case",
-      { caseId },
-      { withCredentials: true }
-    );
+    try {
+      await axios.post(
+        "http://localhost:5000/api/lawyer/enter-case",
+        { caseId },
+        { withCredentials: true }
+      );
 
-    // ✅ ADD THIS
-    sessionStorage.setItem("role", "lawyer");
-
-    window.location.href = `/courtroom/${caseId}`;
-  } catch {
-    alert("Not authorized");
-  }
-};
-
+      sessionStorage.setItem("role", "lawyer");
+      window.location.href = `/courtroom/${caseId}`;
+    } catch {
+      alert("Not authorized");
+    }
+  };
 
   return (
-    <div style={{ padding: "30px" }}>
-      <h2>⚖️ Lawyer Dashboard</h2>
-      <p><b>Advocate:</b> {user.name}</p>
+    <div className="lawyer-dashboard">
 
-      {message && <p style={{ color: "green" }}>{message}</p>}
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      {/* ===== TOP BAR ===== */}
+      <div className="top-bar">
+        <h2>⚖️ Lawyer Dashboard</h2>
 
-      <hr />
-
-      <h3>📩 Pending Requests</h3>
-      {requests.length === 0 && <p>No pending requests</p>}
-
-      {requests.map(r => (
-        <div
-          key={r._id}
-          style={{ border: "1px solid #ccc", padding: "10px", marginBottom: "10px" }}
+        <button
+          className="btn btn-logout"
+          onClick={async () => {
+            await axios.post(
+              "http://localhost:5000/api/auth/logout",
+              {},
+              { withCredentials: true }
+            );
+            window.location.href = "/";
+          }}
         >
-          <b>Case ID:</b> {r.caseId}<br />
-          <b>Citizen:</b> {r.citizenId?.name}<br />
+          Logout
+        </button>
+      </div>
 
-          <button onClick={() => acceptRequest(r._id)}>
-            Accept
-          </button>
+<div className="advocate-info">
+  Advocate: <span>{user.name}</span>
+</div>
 
-          <button
-            onClick={() => rejectRequest(r._id)}
-            style={{ marginLeft: "10px" }}
-          >
-            Reject
-          </button>
-        </div>
-      ))}
 
-      <hr />
+      {message && <p className="success">{message}</p>}
+      {error && <p className="error">{error}</p>}
 
-      <h3>📂 My Cases</h3>
-      {cases.length === 0 && <p>No cases assigned yet</p>}
+      {/* ===== PENDING REQUESTS BOX ===== */}
+      <div className="section-box">
+        <h3>📩 Pending Requests</h3>
+        {requests.length === 0 && <p>No pending requests</p>}
 
-      {cases.map(c => (
-        <div key={c.caseId} style={{ marginBottom: "10px" }}>
-          <b>{c.caseId}</b> — {c.title} ({c.status})
-          <br />
-          <button onClick={() => enterCourt(c.caseId)}>
-            Enter Courtroom
-          </button>
-        </div>
-      ))}
+        {requests.map((r) => (
+          <div key={r._id} className="card">
+            <b>Case ID:</b> {r.caseId}<br />
+            <b>Citizen:</b> {r.citizenId?.name}<br />
 
-      <hr />
+            <button
+              className="btn btn-accept"
+              onClick={() => acceptRequest(r._id)}
+            >
+              Accept
+            </button>
 
-      <button
-        onClick={async () => {
-          await axios.post(
-            "http://localhost:5000/api/auth/logout",
-            {},
-            { withCredentials: true }
-          );
-          window.location.href = "/";
-        }}
-      >
-        Logout
-      </button>
+            <button
+              className="btn btn-reject"
+              onClick={() => rejectRequest(r._id)}
+            >
+              Reject
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {/* ===== MY CASES BOX ===== */}
+      <div className="section-box">
+        <h3>📂 My Cases</h3>
+        {cases.length === 0 && <p>No cases assigned yet</p>}
+
+        {cases.map((c) => (
+          <div key={c.caseId} className="card">
+            <b>{c.caseId}</b> — {c.title} ({c.status})
+            <br />
+            <button
+              className="btn btn-enter"
+              onClick={() => enterCourt(c.caseId)}
+            >
+              Enter Courtroom
+            </button>
+          </div>
+        ))}
+      </div>
+
     </div>
   );
 }

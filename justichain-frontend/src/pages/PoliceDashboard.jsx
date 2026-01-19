@@ -1,12 +1,16 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
+import "../styles/police.css";
 
 function PoliceDashboard() {
   const [user, setUser] = useState({ name: "" });
   const [cases, setCases] = useState([]);
   const [caseId, setCaseId] = useState("");
   const [note, setNote] = useState("");
-  const [message, setMessage] = useState("");
+
+  // Separate messages for each section
+  const [assignMsg, setAssignMsg] = useState("");
+  const [noteMsg, setNoteMsg] = useState("");
 
   useEffect(() => {
     const init = async () => {
@@ -37,7 +41,6 @@ function PoliceDashboard() {
     init();
   }, []);
 
-  // 🟢 Assign Case
   const assignCase = async () => {
     try {
       const res = await axios.post(
@@ -46,7 +49,7 @@ function PoliceDashboard() {
         { withCredentials: true }
       );
 
-      setMessage(res.data.msg);
+      setAssignMsg(res.data.msg);
       setCaseId("");
 
       const updated = await axios.get(
@@ -55,11 +58,10 @@ function PoliceDashboard() {
       );
       setCases(updated.data);
     } catch (err) {
-      setMessage(err.response?.data?.msg || "Assignment failed");
+      setAssignMsg(err.response?.data?.msg || "Assignment failed");
     }
   };
 
-  // 🏛️ Enter Courtroom
   const enterCourtroom = async (id) => {
     try {
       await axios.post(
@@ -68,16 +70,13 @@ function PoliceDashboard() {
         { withCredentials: true }
       );
 
-      // ✅ CRITICAL FIX
       sessionStorage.setItem("role", "police");
-
       window.location.href = `/courtroom/${id}`;
     } catch {
       alert("Not authorized or courtroom closed");
     }
   };
 
-  // 📝 Add Note
   const addNote = async () => {
     try {
       await axios.post(
@@ -86,69 +85,89 @@ function PoliceDashboard() {
         { withCredentials: true }
       );
 
-      setMessage("Investigation note added");
+      setNoteMsg("Investigation note added");
       setNote("");
     } catch {
-      setMessage("Failed to add note");
+      setNoteMsg("Failed to add note");
     }
   };
 
   return (
-    <div style={{ padding: "30px" }}>
-      <h2>👮 Police Dashboard</h2>
-      <p><b>Officer:</b> {user.name}</p>
+    <div className="police-dashboard">
+      <div className="top-bar">
+        <h2>👮 Police Dashboard</h2>
 
-      {message && <p>{message}</p>}
+        <button
+          className="btn btn-logout"
+          onClick={async () => {
+            await axios.post(
+              "http://localhost:5000/api/auth/logout",
+              {},
+              { withCredentials: true }
+            );
+            window.location.href = "/";
+          }}
+        >
+          Logout
+        </button>
+      </div>
 
-      <hr />
+      <div className="section-wrapper">
+        <div className="officer-label">
+          Officer: {user.name}
+        </div>
 
-      <h3>Assign Case</h3>
-      <input
-        placeholder="Enter Case ID"
-        value={caseId}
-        onChange={e => setCaseId(e.target.value)}
-      />
-      <button onClick={assignCase}>Assign Case</button>
+        {/* ====== ASSIGN CASE BOX ====== */}
+        <div className="section-box">
+          <h3>Assign Case</h3>
 
-      <hr />
+          {/* MESSAGE INSIDE THIS BOX */}
+          {assignMsg && <p className="box-message">{assignMsg}</p>}
 
-      <h3>Add Investigation Note</h3>
-      <textarea
-        value={note}
-        onChange={e => setNote(e.target.value)}
-      />
-      <br />
-      <button onClick={addNote}>Submit Note</button>
-
-      <hr />
-
-      <h3>My Assigned Cases</h3>
-      {cases.length === 0 && <p>No assigned cases yet</p>}
-
-      {cases.map(c => (
-        <div key={c.caseId} style={{ marginBottom: "10px" }}>
-          <b>{c.caseId}</b> — {c.title} ({c.status})
-          <br />
-          <button onClick={() => enterCourtroom(c.caseId)}>
-            Enter Courtroom
+          <input
+            placeholder="Enter Case ID"
+            value={caseId}
+            onChange={e => setCaseId(e.target.value)}
+          />
+          <button className="btn btn-assign" onClick={assignCase}>
+            Assign Case
           </button>
         </div>
-      ))}
 
-      <hr />
+        {/* ====== ADD NOTE BOX ====== */}
+        <div className="section-box">
+          <h3>Add Investigation Note</h3>
 
-      <button
-        onClick={async () => {
-          await axios.post(
-            "http://localhost:5000/api/auth/logout",
-            {},
-            { withCredentials: true }
-          );
-          window.location.href = "/";
-        }}
-      >
-        Logout
-      </button>
+          {/* MESSAGE INSIDE THIS BOX */}
+          {noteMsg && <p className="box-message">{noteMsg}</p>}
+
+          <textarea
+            value={note}
+            onChange={e => setNote(e.target.value)}
+          />
+          <br />
+          <button className="btn btn-submit" onClick={addNote}>
+            Submit Note
+          </button>
+        </div>
+
+        {/* ====== CASE LIST BOX ====== */}
+        <div className="section-box">
+          <h3>My Assigned Cases</h3>
+
+          {cases.length === 0 && <p>No assigned cases yet</p>}
+
+          {cases.map(c => (
+            <div key={c.caseId} className="card">
+              <b>{c.caseId}</b> — {c.title} ({c.status})
+              <br />
+              <button className="btn btn-enter" onClick={() => enterCourtroom(c.caseId)}>
+                Enter Courtroom
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

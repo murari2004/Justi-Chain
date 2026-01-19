@@ -1,5 +1,6 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
+import "../styles/citizen.css";
 
 function CitizenDashboard() {
   const [user, setUser] = useState({ name: "" });
@@ -119,142 +120,161 @@ function CitizenDashboard() {
 
   // 🏛️ ENTER COURTROOM
   const enterCourt = async () => {
-  setError("");
+    setError("");
 
-  try {
-    await axios.post(
-      "http://localhost:5000/api/citizen/enter-case",
-      { caseId },
-      { withCredentials: true }
-    );
-    sessionStorage.setItem("role", "citizen");
-    window.location.href = `/courtroom/${caseId}`;
-  } catch (err) {
-    setError(err.response?.data?.msg || "Unauthorized or courtroom closed");
-  }
-};
+    try {
+      await axios.post(
+        "http://localhost:5000/api/citizen/enter-case",
+        { caseId },
+        { withCredentials: true }
+      );
+      sessionStorage.setItem("role", "citizen");
+      window.location.href = `/courtroom/${caseId}`;
+    } catch (err) {
+      setError(err.response?.data?.msg || "Unauthorized or courtroom closed");
+    }
+  };
 
   return (
-    <div style={{ padding: "30px", maxWidth: "900px" }}>
-      <h2>👤 Citizen Dashboard</h2>
-      <p><b>User:</b> {user.name}</p>
+    <div className="dashboard-page">
 
-      <hr />
+      {/* TOP BAR */}
+      <div className="dashboard-header">
+        <h2>👤 Citizen Dashboard</h2>
 
-      <h3>Enter Courtroom</h3>
-      <input
-        placeholder="JC-xxxx"
-        value={caseId}
-        onChange={(e) => setCaseId(e.target.value)}
-      />
-      <button onClick={enterCourt}>Enter</button>
-
-      <hr />
-
-      <h3>Register New Case</h3>
-
-      <input
-        placeholder="Case Title"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        style={{ width: "100%" }}
-      /><br /><br />
-
-      <select
-        value={caseType}
-        onChange={(e) => setCaseType(e.target.value)}
-        style={{ width: "100%" }}
-      >
-        <option value="">Select Case Type</option>
-        <option value="Civil">Civil</option>
-        <option value="Crime">Crime</option>
-        <option value="Land">Land</option>
-        <option value="Discrimination">Discrimination</option>
-      </select><br /><br />
-
-      <textarea
-        placeholder="Describe your case"
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        rows={5}
-        style={{ width: "100%" }}
-      /><br /><br />
-
-      <input
-        placeholder="Opponent (optional)"
-        value={opponent}
-        onChange={(e) => setOpponent(e.target.value)}
-        style={{ width: "100%" }}
-      /><br /><br />
-
-      <button onClick={registerCase}>Submit Case</button>
-
-      {success && <p style={{ color: "green" }}>{success}</p>}
-      {error && <p style={{ color: "red" }}>{error}</p>}
-
-      <hr />
-
-      <h3>Your Cases</h3>
-      {cases.length === 0 && <p>No cases found</p>}
-
-      {cases.map(c => (
-        <div
-          key={c.caseId}
-          style={{ border: "1px solid #ccc", padding: "12px", marginBottom: "12px" }}
+        <button
+          className="logout-btn"
+          onClick={async () => {
+            await axios.post(
+              "http://localhost:5000/api/auth/logout",
+              {},
+              { withCredentials: true }
+            );
+            window.location.href = "/";
+          }}
         >
-          <b>{c.caseId}</b><br />
-          {c.title}<br />
-          Status: {c.status}<br />
+          Logout
+        </button>
+      </div>
 
-          {c.lawyerId ? (
-            <p style={{ color: "green" }}>
-              <b>Lawyer Assigned:</b><br />
-              {c.lawyerId.name}<br />
-              {c.lawyerId.email}
-            </p>
-          ) : (
-            <>
-              <p style={{ color: "orange" }}>No lawyer assigned</p>
+      {/* MAIN CARD */}
+      <div className="dashboard-card">
 
-              <button onClick={() => loadLawyerSuggestions(c.caseId)}>
-                Suggest Lawyers
-              </button>
+        {/* SECTION 1 */}
+        <div className="section">
+          <p><b>User:</b> {user.name}</p>
 
-              {Array.isArray(lawyerSuggestions[c.caseId]) &&
-                lawyerSuggestions[c.caseId].map(l => (
-                  <div
-                    key={l._id}
-                    style={{ border: "1px dashed #aaa", padding: "8px", marginTop: "8px" }}
-                  >
-                    <b>{l.name}</b><br />
-                    <small>{l.email}</small><br />
-                    <button
-                      onClick={() => sendLawyerRequest(l._id, c.caseId)}
-                    >
-                      Send Request
-                    </button>
-                  </div>
-                ))
-              }
-            </>
-          )}
+          <div className="courtroom-section">
+            <h3>Enter Courtroom</h3>
+            <input
+              placeholder="JC-xxxx"
+              value={caseId}
+              onChange={(e) => setCaseId(e.target.value)}
+            />
+            <button className="primary-btn" onClick={enterCourt}>
+              Enter
+            </button>
+          </div>
         </div>
-      ))}
 
-      <hr />
+        {/* SECTION 2 */}
+        <div className="section register-section">
+          <h3>Register New Case</h3>
 
-      <button
-        onClick={async () => {
-          await axios.post(
-            "http://localhost:5000/api/auth/logout",
-            {},
-            { withCredentials: true }
-          );
-          window.location.href = "/";
-        }}
-      >
-        Logout
-      </button>
+          <div className="form-group">
+            <label>Case Title</label>
+            <input
+              placeholder="Enter case title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Case Type</label>
+            <select value={caseType} onChange={(e) => setCaseType(e.target.value)}>
+              <option value="">Select Case Type</option>
+              <option value="Civil">Civil</option>
+              <option value="Crime">Crime</option>
+              <option value="Land">Land</option>
+              <option value="Discrimination">Discrimination</option>
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label>Description</label>
+            <textarea
+              placeholder="Describe your case"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={5}
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Opponent (optional)</label>
+            <input
+              placeholder="Opponent name"
+              value={opponent}
+              onChange={(e) => setOpponent(e.target.value)}
+            />
+          </div>
+
+          <button className="primary-btn" onClick={registerCase}>
+            Submit Case
+          </button>
+
+          {success && <p className="success">{success}</p>}
+          {error && <p className="error">{error}</p>}
+        </div>
+
+        {/* SECTION 3 */}
+        <div className="section">
+          <h3>Your Cases</h3>
+
+          {cases.length === 0 && <p>No cases found</p>}
+
+          {cases.map(c => (
+            <div className="case-box" key={c.caseId}>
+              <b>{c.caseId}</b><br />
+              {c.title}<br />
+              Status: {c.status}<br />
+
+              {c.lawyerId ? (
+                <p className="assigned">
+                  <b>Lawyer Assigned:</b><br />
+                  {c.lawyerId.name}<br />
+                  {c.lawyerId.email}
+                </p>
+              ) : (
+                <>
+                  <p className="no-lawyer">No lawyer assigned</p>
+
+                  <button className="primary-btn" onClick={() => loadLawyerSuggestions(c.caseId)}>
+                    Suggest Lawyers
+                  </button>
+
+                  {Array.isArray(lawyerSuggestions[c.caseId]) &&
+                    lawyerSuggestions[c.caseId].map(l => (
+                      <div className="lawyer-card" key={l._id}>
+                        <b>{l.name}</b><br />
+                        <small>{l.email}</small><br />
+                        <button
+                          className="primary-btn"
+                          onClick={() => sendLawyerRequest(l._id, c.caseId)}
+                        >
+                          Send Request
+                        </button>
+                      </div>
+                    ))
+                  }
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+
+      </div>
     </div>
   );
 }

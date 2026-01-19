@@ -15,14 +15,18 @@
 /* HERO SECTION */
 .hero-section {
   height: 100vh;
-  background: linear-gradient(135deg, #1e3c72, #2a5298);
+  background-image: url("D:\JustiChain\justichain-frontend\public\background.png");
+  background-size: cover;
+  background-position: top;
+  background-repeat: no-repeat;
   position: relative;
 }
 
+
 .hero-overlay {
   height: 100%;
-  background: rgba(0, 0, 0, 0.55);
-  color: white;
+  background: rgba(0, 0, 0, 0.721);
+  color: rgb(255, 255, 255);
   display: flex;
   flex-direction: column;
   justify-content: center;
